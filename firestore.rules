@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// Regole di sicurezza di "Conti figli".
+// - Genitori (documento genitori/{uid}): leggono e scrivono tutto sotto figli/.
+// - Figlio (email Google verificata uguale a figli/{id}.email): legge solo il proprio conto
+//   e può modificare solo il campo `obiettivo`.
+// - Chiunque altro: nessun accesso.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticato() {
+      return request.auth != null;
+    }
+
+    function eGenitore() {
+      return autenticato() && exists(/databases/$(database)/documents/genitori/$(request.auth.uid));
+    }
+
+    function eFiglioDi(datiFiglio) {
+      return autenticato()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && datiFiglio.email == request.auth.token.email.lower();
+    }
+
+    function obiettivoValido(o) {
+      return o == null || (
+        o is map
+        && o.keys().hasOnly(['descrizione', 'importoCent'])
+        && o.keys().hasAll(['descrizione', 'importoCent'])
+        && o.descrizione is string && o.descrizione.size() > 0 && o.descrizione.size() <= 60
+        && o.importoCent is int && o.importoCent >= 1 && o.importoCent <= 10000000
+      );
+    }
+
+    function figlioValido(d) {
+      return d.keys().hasOnly(['nome', 'email', 'colore', 'obiettivo'])
+        && d.keys().hasAll(['nome', 'email', 'colore', 'obiettivo'])
+        && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 40
+        && d.email is string && d.email.size() <= 100 && d.email == d.email.lower()
+        && d.colore is string && d.colore.matches('^#[0-9a-fA-F]{6}$')
+        && obiettivoValido(d.obiettivo);
+    }
+
+    function movimentoValido(d) {
+      return d.keys().hasOnly(['data', 'importoCent', 'tipo', 'categoria', 'nota', 'creatoDa', 'creatoIl'])
+        && d.keys().hasAll(['data', 'importoCent', 'tipo', 'categoria', 'nota'])
+        && d.data is string && d.data.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.importoCent is int && d.importoCent > 0 && d.importoCent <= 100000000
+        && d.nota is string && d.nota.size() <= 120
+        && (
+          (d.tipo == 'entrata' && d.categoria in ['saldo-iniziale', 'paghetta', 'regalo-compleanno', 'regalo-natale',
+                                                  'altro-regalo', 'versamento', 'spesa-casa-pagata', 'altra-entrata'])
+          || (d.tipo == 'uscita' && d.categoria in ['prelievo', 'quota-casa', 'altra-uscita'])
+        );
+    }
+
+    match /genitori/{uid} {
+      // Ognuno può verificare se è genitore leggendo il proprio documento; si creano solo dalla console.
+      allow get: if autenticato() && (request.auth.uid == uid || eGenitore());
+      allow list: if eGenitore();
+      allow write: if false;
+    }
+
+    match /figli/{figlioId} {
+      allow read: if eGenitore() || eFiglioDi(resource.data);
+      allow create: if eGenitore() && figlioValido(request.resource.data);
+      allow update: if (eGenitore() && figlioValido(request.resource.data))
+        || (eFiglioDi(resource.data)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['obiettivo'])
+            && obiettivoValido(request.resource.data.obiettivo));
+      allow delete: if eGenitore();
+
+      match /movimenti/{movId} {
+        allow read: if eGenitore()
+          || eFiglioDi(get(/databases/$(database)/documents/figli/$(figlioId)).data);
+        allow create, update: if eGenitore() && movimentoValido(request.resource.data);
+        allow delete: if eGenitore();
+      }
+    }
+  }
+}

@@ -1,13 +1,13 @@
 // Unico punto di accesso a Firebase (Auth + Firestore). Le viste non importano Firebase direttamente.
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js';
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, connectAuthEmulator,
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+} from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js';
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator,
   doc, getDoc, getDocs, collection, query, where, limit, onSnapshot, addDoc, updateDoc, deleteDoc,
   serverTimestamp,
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+} from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 import { normalizzaEmail } from './calcoli.js';
 

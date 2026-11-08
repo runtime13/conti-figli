@@ -4,7 +4,7 @@
 const VERSIONE = 'v1';
 const CACHE = `conti-figli-${VERSIONE}`;
 
-const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
+const SDK = 'https://www.gstatic.com/firebasejs/13.1.0/';
 const FILE_APP = [
   './',
   'index.html',
