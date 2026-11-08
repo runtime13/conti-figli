@@ -17,22 +17,17 @@ export function apriDialogObiettivo(figlio) {
 
   const dialog = el('dialog', {},
     el('form', {
-      onsubmit: async (evento) => {
+      onsubmit: (evento) => {
         evento.preventDefault();
         const cent = euroInCent(importo.value);
         if (cent === null || cent > 10_000_000) { erroreImporto.textContent = 'Importo non valido'; return; }
         const testo = descrizione.value.trim();
         if (!testo) return;
         erroreImporto.textContent = '';
-        salva.disabled = true;
-        try {
-          await impostaObiettivo(figlio.id, { descrizione: testo, importoCent: cent });
-          dialog.close();
-        } catch {
-          avviso('Salvataggio non riuscito, riprova', 'errore');
-        } finally {
-          salva.disabled = false;
-        }
+        // Scrittura applicata subito in locale; il server conferma quando può.
+        impostaObiettivo(figlio.id, { descrizione: testo, importoCent: cent })
+          .catch(() => avviso('Salvataggio non riuscito, riprova', 'errore'));
+        dialog.close();
       },
     },
       el('h3', {}, attuale ? 'Modifica obiettivo' : 'Imposta obiettivo'),

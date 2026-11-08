@@ -22,7 +22,7 @@ export function montaConto(contenitore, contesto) {
         class: 'pulsante pericolo',
         onclick: async () => {
           if (!(await conferma('Rimuovere l’obiettivo?', 'Rimuovi'))) return;
-          try { await impostaObiettivo(figlio.id, null); } catch { avviso('Salvataggio non riuscito, riprova', 'errore'); }
+          impostaObiettivo(figlio.id, null).catch(() => avviso('Salvataggio non riuscito, riprova', 'errore'));
         },
       }, 'Rimuovi') : null,
     );

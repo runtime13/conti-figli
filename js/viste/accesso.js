@@ -2,13 +2,25 @@
 import { configurato, entraConGoogle, esci } from '../dati.js';
 import { el } from '../ui.js';
 
-export function montaAccesso(contenitore, { ruolo } = {}) {
+export function montaAccesso(contenitore, { ruolo, riprova } = {}) {
   const messaggio = el('p', { class: 'errore-campo', role: 'alert' });
 
   if (!configurato) {
     contenitore.replaceChildren(el('section', { class: 'accesso' },
       el('h1', {}, 'Conti figli'),
       el('p', { class: 'tenue' }, 'Configurazione Firebase mancante: compila js/firebase-config.js.'),
+    ));
+    return () => {};
+  }
+
+  if (ruolo === 'errore') {
+    contenitore.replaceChildren(el('section', { class: 'accesso' },
+      el('h1', {}, 'Impossibile verificare l’accesso'),
+      el('p', { class: 'tenue' }, 'Controlla la connessione e riprova.'),
+      el('div', { class: 'riga-azioni', style: { justifyContent: 'center' } },
+        el('button', { class: 'pulsante primario', onclick: () => riprova?.() }, 'Riprova'),
+        el('button', { class: 'pulsante', onclick: () => esci() }, 'Esci'),
+      ),
     ));
     return () => {};
   }

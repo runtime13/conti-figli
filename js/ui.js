@@ -6,7 +6,13 @@ export function el(tag, attributi = {}, ...figli) {
   for (const [chiave, valore] of Object.entries(attributi ?? {})) {
     if (valore === null || valore === undefined || valore === false) continue;
     if (chiave.startsWith('on') && typeof valore === 'function') nodo.addEventListener(chiave.slice(2), valore);
-    else if (chiave === 'style' && typeof valore === 'object') Object.assign(nodo.style, valore);
+    else if (chiave === 'style' && typeof valore === 'object') {
+      for (const [proprieta, v] of Object.entries(valore)) {
+        // Le variabili CSS (--nome) si impostano solo con setProperty.
+        if (proprieta.startsWith('--')) nodo.style.setProperty(proprieta, v);
+        else nodo.style[proprieta] = v;
+      }
+    }
     else if (valore === true) nodo.setAttribute(chiave, '');
     else nodo.setAttribute(chiave, String(valore));
   }

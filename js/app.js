@@ -58,16 +58,25 @@ function mostraErroreCaricamento() {
   ));
 }
 
+// Ogni navigazione ha un numero: se nel frattempo ne è partita un'altra, quella vecchia si ferma
+// (evita due viste montate insieme con listener mai staccati).
+let turnoNavigazione = 0;
+
 async function mostraRotta() {
+  const turno = ++turnoNavigazione;
   smonta();
   const { user, ruolo } = contesto;
-  if (!user || !ruolo || ruolo === 'nessuno') {
+  if (user && ruolo === null) { // ruolo ancora in verifica
+    contenitore.replaceChildren(el('p', { class: 'caricamento' }, 'Caricamento…'));
+    return;
+  }
+  if (!user || ruolo === 'nessuno' || ruolo === 'errore') {
     aggiornaMenu();
-    smontaVistaCorrente = montaAccesso(contenitore, { ruolo });
+    smontaVistaCorrente = montaAccesso(contenitore, { ruolo, riprova: verificaRuolo });
     return;
   }
 
-  let rotta = leggiRotta();
+  const rotta = leggiRotta();
   // Un figlio vede solo il proprio conto.
   if (ruolo === 'figlio' && !(rotta.nome === 'conto' && rotta.figlioId === contesto.figlioId)) {
     location.replace(`#/conto/${encodeURIComponent(contesto.figlioId)}`);
@@ -77,9 +86,14 @@ async function mostraRotta() {
   aggiornaMenu();
   contenitore.replaceChildren(el('p', { class: 'caricamento' }, 'Caricamento…'));
   timerCaricamento = setTimeout(mostraErroreCaricamento, ATTESA_MASSIMA_MS);
-  const montaVista = await VISTE[rotta.nome]();
-  if (leggiRotta().nome !== rotta.nome) return; // l'utente ha già cambiato pagina
-  rotta = leggiRotta();
+  let montaVista;
+  try {
+    montaVista = await VISTE[rotta.nome]();
+  } catch {
+    if (turno === turnoNavigazione) mostraErroreCaricamento();
+    return;
+  }
+  if (turno !== turnoNavigazione) return; // nel frattempo l'utente ha cambiato pagina
   smontaVistaCorrente = montaVista(contenitore, {
     ...contesto,
     ...rotta,
@@ -102,24 +116,45 @@ function aggiornaMenu() {
 addEventListener('hashchange', mostraRotta);
 
 // Service worker (app installabile e apribile offline); non in locale, per non avere file vecchi in cache durante lo sviluppo.
+// Quando una nuova versione prende il controllo, si ricarica la pagina per non mescolare moduli vecchi e nuovi.
 if ('serviceWorker' in navigator && !['localhost', '127.0.0.1'].includes(location.hostname)) {
+  const avevaController = Boolean(navigator.serviceWorker.controller);
+  let ricaricata = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (avevaController && !ricaricata) { ricaricata = true; location.reload(); }
+  });
   navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Ogni cambio di utente ha un numero: una verifica del ruolo arrivata in ritardo per un utente
+// precedente viene ignorata.
+let turnoUtente = 0;
+
+async function verificaRuolo() {
+  const turno = ++turnoUtente;
+  const { user } = contesto;
+  contesto = { user, ruolo: null, figlioId: null };
+  if (user) {
+    mostraRotta();
+    let nuovo;
+    try {
+      const esito = await determinaRuolo(user);
+      nuovo = { user, ruolo: esito.ruolo, figlioId: esito.figlioId ?? null };
+    } catch {
+      // Errore di rete o temporaneo: non è un "account non abilitato".
+      nuovo = { user, ruolo: 'errore', figlioId: null };
+    }
+    if (turno !== turnoUtente) return;
+    contesto = nuovo;
+  }
+  mostraRotta();
 }
 
 if (!configurato) {
   mostraRotta();
 } else {
-  osservaUtente(async (user) => {
+  osservaUtente((user) => {
     contesto = { user, ruolo: null, figlioId: null };
-    if (user) {
-      contenitore.replaceChildren(el('p', { class: 'caricamento' }, 'Caricamento…'));
-      try {
-        const esito = await determinaRuolo(user);
-        contesto = { user, ruolo: esito.ruolo, figlioId: esito.figlioId ?? null };
-      } catch {
-        contesto = { user, ruolo: 'nessuno', figlioId: null };
-      }
-    }
-    mostraRotta();
+    verificaRuolo();
   });
 }

@@ -18,7 +18,7 @@ export function montaImpostazioni(contenitore, contesto) {
     const salva = el('button', { class: 'pulsante primario', type: 'submit' }, 'Salva');
     return el('form', {
       class: 'scheda',
-      onsubmit: async (evento) => {
+      onsubmit: (evento) => {
         evento.preventDefault();
         const indirizzo = normalizzaEmail(email.value);
         if (!EMAIL_VALIDA.test(indirizzo)) { erroreEmail.textContent = 'Indirizzo email non valido'; return; }
@@ -26,17 +26,12 @@ export function montaImpostazioni(contenitore, contesto) {
           erroreEmail.textContent = 'Questo indirizzo è già usato da un altro figlio'; return;
         }
         erroreEmail.textContent = '';
-        salva.disabled = true;
-        try {
-          await salvaFiglio(figlio?.id ?? null, { nome: nome.value, email: indirizzo, colore: colore.value });
-          inModifica = null;
-          disegna();
-          avviso('Salvato');
-        } catch {
-          avviso('Salvataggio non riuscito, riprova', 'errore');
-        } finally {
-          salva.disabled = false;
-        }
+        if (!nome.value.trim()) { nome.focus(); return; }
+        // Scrittura applicata subito in locale; il server conferma quando può.
+        salvaFiglio(figlio?.id ?? null, { nome: nome.value, email: indirizzo, colore: colore.value })
+          .catch(() => avviso('Salvataggio non riuscito, riprova', 'errore'));
+        inModifica = null;
+        disegna();
       },
     },
       el('h3', {}, figlio ? `Modifica ${figlio.nome}` : 'Nuovo figlio'),

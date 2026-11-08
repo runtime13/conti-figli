@@ -30,36 +30,27 @@ export function montaMovimento(contenitore, contesto) {
     class: 'pulsante pericolo', type: 'button',
     onclick: async () => {
       if (!(await conferma('Eliminare questo movimento?', 'Elimina'))) return;
-      try {
-        await eliminaMovimento(figlioId, movId);
-        indietro();
-      } catch {
-        avviso('Eliminazione non riuscita, riprova', 'errore');
-      }
+      // Firestore applica subito la modifica in locale e la invia appena possibile:
+      // non si aspetta la conferma del server (con rete instabile resterebbe bloccato).
+      eliminaMovimento(figlioId, movId).catch(() => avviso('Eliminazione non riuscita, riprova', 'errore'));
+      indietro();
     },
   }, 'Elimina') : null;
 
   const modulo = el('form', {
     class: 'scheda',
-    onsubmit: async (evento) => {
+    onsubmit: (evento) => {
       evento.preventDefault();
       const cent = euroInCent(importo.value);
-      if (cent === null) { erroreImporto.textContent = 'Importo non valido'; importo.focus(); return; }
+      if (cent === null || cent > 100_000_000) { erroreImporto.textContent = 'Importo non valido'; importo.focus(); return; }
       erroreImporto.textContent = '';
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data.value)) { avviso('Inserisci la data', 'errore'); data.focus(); return; }
       const valori = { data: data.value, importoCent: cent, tipo, categoria: categoria.value, nota: nota.value.trim() };
-      salva.disabled = true;
-      try {
-        // Offline la scrittura resta in coda e viene inviata appena torna la connessione:
-        // non si aspetta la conferma del server per tornare al conto.
-        const scrittura = movId ? modificaMovimento(figlioId, movId, valori) : aggiungiMovimento(figlioId, valori);
-        if (!navigator.onLine) { scrittura.catch(() => avviso('Salvataggio non riuscito', 'errore')); indietro(); return; }
-        await scrittura;
-        indietro();
-      } catch {
-        avviso('Salvataggio non riuscito, riprova', 'errore');
-      } finally {
-        salva.disabled = false;
-      }
+      // Firestore applica subito la scrittura in locale e la invia appena possibile: si torna al conto
+      // senza aspettare il server, così un salvataggio lento non induce a reinserire il movimento.
+      const scrittura = movId ? modificaMovimento(figlioId, movId, valori) : aggiungiMovimento(figlioId, valori);
+      scrittura.catch(() => avviso('Salvataggio non riuscito, riprova', 'errore'));
+      indietro();
     },
   },
     el('h1', { style: { marginTop: 0, fontSize: '1.3rem' } }, movId ? 'Modifica movimento' : 'Nuovo movimento'),

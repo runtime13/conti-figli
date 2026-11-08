@@ -30,8 +30,15 @@ const FILE_APP = [
   `${SDK}firebase-firestore.js`,
 ];
 
+// Tutti i file di una versione vengono scaricati insieme (saltando la cache HTTP del browser)
+// e serviti solo da quella cache: niente mescolanza di moduli vecchi e nuovi.
+// Al cambio di VERSIONE la pagina aperta si ricarica da sola (vedi js/app.js, 'controllerchange').
 self.addEventListener('install', (evento) => {
-  evento.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE_APP)).then(() => self.skipWaiting()));
+  evento.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(FILE_APP.map((u) => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (evento) => {
@@ -50,14 +57,14 @@ self.addEventListener('fetch', (evento) => {
   const sdk = request.url.startsWith(SDK);
   if (!stessoSito && !sdk) return; // Firestore, Auth e Google passano diretti
 
-  // SDK con versione fissata: prima la cache. File dell'app: cache subito, aggiornata in background.
-  evento.respondWith(caches.open(CACHE).then(async (cache) => {
+  evento.respondWith((async () => {
+    const cache = await caches.open(CACHE);
     const inCache = await cache.match(request, { ignoreSearch: stessoSito });
-    if (inCache && sdk) return inCache;
-    const daRete = fetch(request).then((risposta) => {
-      if (risposta.ok) cache.put(request, risposta.clone());
-      return risposta;
-    }).catch(() => inCache ?? (request.mode === 'navigate' ? cache.match('index.html') : Response.error()));
-    return inCache ?? daRete;
-  }));
+    if (inCache) return inCache;
+    if (request.mode === 'navigate') {
+      const pagina = await cache.match('index.html');
+      if (pagina) return pagina;
+    }
+    return fetch(request); // file non in elenco: direttamente dalla rete
+  })());
 });

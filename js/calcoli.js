@@ -113,7 +113,7 @@ export function totaliAnno(movimenti, anno) {
 
 export function avanzamentoObiettivo(saldoCent, obiettivo) {
   if (!obiettivo) return null;
-  const percentuale = Math.min(100, Math.max(0, Math.round((saldoCent / obiettivo.importoCent) * 100)));
+  const percentuale = Math.min(100, Math.max(0, Math.floor((saldoCent / obiettivo.importoCent) * 100)));
   return {
     percentuale,
     raggiunto: saldoCent >= obiettivo.importoCent,

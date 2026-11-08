@@ -84,6 +84,11 @@ test('avanzamentoObiettivo', () => {
   assert.equal(avanzamentoObiettivo(1000, null), null);
 });
 
+test('avanzamentoObiettivo non mostra 100% se mancano ancora dei centesimi', () => {
+  const o = { descrizione: 'Bici', importoCent: 30000 };
+  assert.deepEqual(avanzamentoObiettivo(29960, o), { percentuale: 99, raggiunto: false, mancanteCent: 40 });
+});
+
 test('etichettaCategoria e CATEGORIE', () => {
   assert.equal(etichettaCategoria('quota-casa'), 'Quota casa');
   assert.equal(etichettaCategoria('spesa-casa-pagata'), 'Spesa di casa pagata');

@@ -52,8 +52,8 @@ export async function determinaRuolo(user) {
   if (genitore.exists()) return { ruolo: 'genitore' };
   if (user.email && user.emailVerified) {
     const q = query(collection(db, 'figli'), where('email', '==', normalizzaEmail(user.email)), limit(1));
-    const risultato = await getDocs(q).catch(() => null);
-    if (risultato && !risultato.empty) return { ruolo: 'figlio', figlioId: risultato.docs[0].id };
+    const risultato = await getDocs(q);
+    if (!risultato.empty) return { ruolo: 'figlio', figlioId: risultato.docs[0].id };
   }
   return { ruolo: 'nessuno' };
 }
