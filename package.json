@@ -1,0 +1,9 @@
+{
+  "name": "conti-figli",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/calcoli.test.js",
+    "test:regole": "firebase emulators:exec --only firestore \"node --test test/regole.test.js\""
+  }
+}
