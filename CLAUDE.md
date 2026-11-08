@@ -7,4 +7,5 @@ Progetto: app web installabile (PWA) per gestire i conti dei tre figli (paghette
 - Non committare mai credenziali, token, file `.env` o chiavi di account di servizio Firebase. La configurazione web di Firebase (`apiKey`, `projectId`, ...) è pubblica per natura e può stare nel repo
 - Prima di scrivere codice, proporre il piano e attendere conferma
 - Specifica di design: `docs/superpowers/specs/2026-11-08-conti-figli-design.md`
+- Piano di implementazione (con caselle di avanzamento): `docs/superpowers/plans/2026-11-08-conti-figli.md`
 - Repository previsto: GitHub `runtime13/conti-figli`, pubblicato con GitHub Pages
