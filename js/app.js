@@ -101,6 +101,11 @@ function aggiornaMenu() {
 
 addEventListener('hashchange', mostraRotta);
 
+// Service worker (app installabile e apribile offline); non in locale, per non avere file vecchi in cache durante lo sviluppo.
+if ('serviceWorker' in navigator && !['localhost', '127.0.0.1'].includes(location.hostname)) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
 if (!configurato) {
   mostraRotta();
 } else {
