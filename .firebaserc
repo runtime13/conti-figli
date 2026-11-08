@@ -1,1 +1,1 @@
-{ "projects": { "default": "demo-conti-figli" } }
+{ "projects": { "default": "demo-conti-figli", "prod": "conti-figli" } }
