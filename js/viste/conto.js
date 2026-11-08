@@ -85,7 +85,7 @@ export function montaConto(contenitore, contesto) {
     }, anni.map((a) => el('option', { value: a, selected: a === anno }, String(a))));
     const elenco = movimentiAnno(movimenti, anno);
 
-    contenitore.replaceChildren(
+    contenitore.replaceChildren(...[
       el('section', { class: 'scheda', style: { borderLeft: `6px solid ${figlio.colore || 'var(--primario)'}` } },
         el('div', { class: 'intestazione-conto' }, el('h1', {}, figlio.nome), el('span', { class: 'tenue' }, 'Saldo')),
         nodoSaldo(s, 'saldo-grande'),
@@ -103,7 +103,7 @@ export function montaConto(contenitore, contesto) {
         class: 'fab', 'aria-label': 'Nuovo movimento', title: 'Nuovo movimento',
         onclick: () => contesto.vai(`#/conto/${encodeURIComponent(figlioId)}/nuovo`),
       }, '+') : null,
-    );
+    ].filter(Boolean));
   }
 
   const staccaFiglio = osservaFiglio(figlioId, (f) => { figlio = f; if (f === null) contesto.pronto(); disegna(); }, contesto.errore);

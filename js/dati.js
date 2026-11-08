@@ -20,7 +20,7 @@ let auth = null;
 let db = null;
 
 if (configurato) {
-  const app = initializeApp(firebaseConfig.apiKey ? firebaseConfig : { apiKey: 'demo', projectId: 'demo-conti-figli' });
+  const app = initializeApp(firebaseConfig.apiKey ? firebaseConfig : { apiKey: 'demo', projectId: 'demo-conti-figli', authDomain: 'localhost' });
   auth = getAuth(app);
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),

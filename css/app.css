@@ -54,6 +54,7 @@ a { color: var(--primario); }
 }
 .titolo { font-weight: 700; font-size: 1.1rem; color: var(--testo); text-decoration: none; }
 .menu { margin-left: auto; display: flex; gap: 4px; }
+.menu a { text-decoration: none; display: inline-flex; align-items: center; }
 .etichetta-offline {
   font-size: .75rem; font-weight: 600; padding: 2px 8px; border-radius: 99px;
   background: var(--traccia); color: var(--testo-tenue);
