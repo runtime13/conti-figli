@@ -29,7 +29,15 @@ Il papà tiene in contanti e poi in banca i soldi che i tre figli ricevono (pagh
 | `figli/{figlioId}` | `nome` (string), `email` (string, minuscola), `colore` (string), `obiettivo` (map o null: `descrizione` string ≤ 60 caratteri, `importoCent` int > 0) | Creato/modificato dai genitori dalla pagina Impostazioni. |
 | `figli/{figlioId}/movimenti/{movId}` | `data` (string `AAAA-MM-GG`), `importoCent` (int > 0), `tipo` (`entrata`/`uscita`), `categoria` (vedi sotto), `nota` (string ≤ 120), `creatoDa` (uid), `creatoIl` (timestamp server) | Scritti solo dai genitori. |
 
-Categorie: `saldo-iniziale`, `paghetta`, `regalo-compleanno`, `regalo-natale`, `altro-regalo`, `spesa` (prelievo per un acquisto), `altro`.
+Il conto funziona come un conto bancario in cui il genitore fa da "banca": un unico elenco di entrate e uscite, senza registri separati.
+
+Categorie di entrata: `saldo-iniziale`, `paghetta`, `regalo-compleanno`, `regalo-natale`, `altro-regalo`, `versamento` (il figlio consegna contanti o parte dello stipendio), `spesa-casa-pagata` (il figlio ha pagato di tasca propria la spesa di casa: gli viene accreditata), `altra-entrata`.
+
+Categorie di uscita: `prelievo` (soldi ritirati per un acquisto o per il figlio), `quota-casa` (contributo mensile alle spese di casa, per esempio −400 €), `altra-uscita`.
+
+Esempio per il figlio che lavora: ogni mese un'uscita `quota-casa` di 400 €; quando fa lui la spesa di casa, un'entrata `spesa-casa-pagata` dell'importo dello scontrino; quando consegna contanti, un'entrata `versamento`.
+
+Il saldo può diventare negativo: significa che il figlio è in debito con la "banca" e viene mostrato in rosso come "da restituire".
 
 Gli importi sono interi in centesimi per evitare errori di arrotondamento. Saldo, totali e avanzamento dell'obiettivo sono **calcolati sul client** sommando i movimenti (poche centinaia per figlio): non esiste un saldo memorizzato che possa disallinearsi.
 
@@ -53,7 +61,7 @@ Gli importi sono interi in centesimi per evitare errori di arrotondamento. Saldo
    - selettore anno; totali dell'anno: entrate per categoria, uscite, saldo netto dell'anno;
    - elenco movimenti dell'anno, dal più recente, con data, categoria, nota, importo (+ verde / − rosso).
    - Solo genitori: pulsante "+" per nuovo movimento; tocco su un movimento → modifica o elimina (con conferma).
-4. **Modulo movimento** (solo genitori) — data (default oggi), entrata/uscita, importo in euro (convertito in centesimi), categoria (le opzioni dipendono dal tipo), nota. Un'uscita che porterebbe il saldo sotto zero mostra un avviso ma è consentita.
+4. **Modulo movimento** (solo genitori) — data (default oggi), entrata/uscita, importo in euro (convertito in centesimi), categoria (le opzioni dipendono dal tipo), nota. Nessun blocco sul saldo negativo.
 5. **Impostazioni** (solo genitori) — aggiunta/modifica figli (nome, email Google, colore).
 6. **Vista figlio** — all'accesso il figlio va direttamente al proprio Dettaglio conto, in sola lettura tranne l'obiettivo.
 
